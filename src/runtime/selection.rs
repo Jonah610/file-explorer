@@ -3,6 +3,7 @@ use std::{collections::HashSet, path::PathBuf};
 use ratatui::widgets::TableState;
 
 pub(crate) fn move_selection(state: &mut TableState, len: usize, delta: isize) {
+    //len - 1 is the last index to acount for overflow
     if len == 0 {
         state.select(None);
         return;
@@ -10,11 +11,20 @@ pub(crate) fn move_selection(state: &mut TableState, len: usize, delta: isize) {
 
     let current = state.selected().unwrap_or(0).min(len - 1);
 
-    let next = if delta > 0 {
+    let mut next = if delta > 0 {
         (current + 1).min(len - 1)
     } else {
         current.saturating_sub(1)
     };
+
+    if current as isize + delta > len as isize - 1 {
+        // first index
+        next = 0;
+    }
+
+    if current as isize + delta < 0 {
+        next = len - 1;
+    }
 
     state.select(Some(next));
 }
@@ -75,12 +85,12 @@ mod tests {
     }
 
     #[test]
-    fn move_selection_down_clamps_at_last_entry() {
+    fn move_selection_down_wraps_from_last_entry_to_first() {
         let mut state = state_with(Some(2));
 
         move_selection(&mut state, 3, 1);
 
-        assert_eq!(state.selected(), Some(2));
+        assert_eq!(state.selected(), Some(0));
     }
 
     #[test]
@@ -93,12 +103,12 @@ mod tests {
     }
 
     #[test]
-    fn move_selection_up_clamps_at_first_entry() {
+    fn move_selection_up_wraps_from_first_entry_to_last() {
         let mut state = state_with(Some(0));
 
         move_selection(&mut state, 3, -1);
 
-        assert_eq!(state.selected(), Some(0));
+        assert_eq!(state.selected(), Some(2));
     }
 
     #[test]
@@ -120,21 +130,67 @@ mod tests {
     }
 
     #[test]
-    fn move_selection_up_without_selection_stays_at_first_entry() {
+    fn move_selection_up_without_selection_wraps_to_last_entry() {
         let mut state = state_with(None);
 
         move_selection(&mut state, 3, -1);
+
+        assert_eq!(state.selected(), Some(2));
+    }
+
+    #[test]
+    fn move_selection_wraps_after_clamping_stale_selection() {
+        let mut state = state_with(Some(10));
+
+        move_selection(&mut state, 3, 1);
 
         assert_eq!(state.selected(), Some(0));
     }
 
     #[test]
-    fn move_selection_clamps_stale_selection_before_moving() {
-        let mut state = state_with(Some(10));
+    fn move_selection_down_wraps_around_single_entry() {
+        let mut state = state_with(Some(0));
+
+        move_selection(&mut state, 1, 1);
+
+        assert_eq!(state.selected(), Some(0));
+    }
+
+    #[test]
+    fn move_selection_up_wraps_around_single_entry() {
+        let mut state = state_with(Some(0));
+
+        move_selection(&mut state, 1, -1);
+
+        assert_eq!(state.selected(), Some(0));
+    }
+
+    #[test]
+    fn move_selection_down_cycles_through_all_entries() {
+        let mut state = state_with(Some(0));
 
         move_selection(&mut state, 3, 1);
+        assert_eq!(state.selected(), Some(1));
 
+        move_selection(&mut state, 3, 1);
         assert_eq!(state.selected(), Some(2));
+
+        move_selection(&mut state, 3, 1);
+        assert_eq!(state.selected(), Some(0));
+    }
+
+    #[test]
+    fn move_selection_up_cycles_through_all_entries() {
+        let mut state = state_with(Some(0));
+
+        move_selection(&mut state, 3, -1);
+        assert_eq!(state.selected(), Some(2));
+
+        move_selection(&mut state, 3, -1);
+        assert_eq!(state.selected(), Some(1));
+
+        move_selection(&mut state, 3, -1);
+        assert_eq!(state.selected(), Some(0));
     }
 
     #[test]
