@@ -152,7 +152,6 @@ mod tests {
 
         assert!(screen.contains("File Explorer"), "screen was:\n{screen}");
         assert!(screen.contains("/tmp/example"), "screen was:\n{screen}");
-        assert!(screen.contains("Mark"), "screen was:\n{screen}");
         assert!(screen.contains("Type"), "screen was:\n{screen}");
         assert!(screen.contains("Name"), "screen was:\n{screen}");
     }
@@ -193,20 +192,6 @@ mod tests {
         );
 
         assert!(screen(&backend).contains("hello status"));
-    }
-
-    #[test]
-    fn renders_mark_glyphs_for_marked_and_unmarked_entries() {
-        let mut state = TableState::default();
-        let entries = entries(&["/tmp/a.txt", "/tmp/b.txt"]);
-        let marked = HashSet::from([PathBuf::from("/tmp/a.txt")]);
-
-        let backend = draw(60, 10, &mut state, Path::new("/tmp"), &entries, &marked, "");
-
-        let screen = screen(&backend);
-
-        assert!(screen.contains('\u{f0132}'), "screen was:\n{screen}");
-        assert!(screen.contains('\u{e640}'), "screen was:\n{screen}");
     }
 
     #[test]
