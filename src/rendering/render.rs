@@ -31,7 +31,7 @@ pub fn render(
         let is_dir = path.is_dir();
         let is_marked = marked.contains(path);
 
-        let marker = if is_marked { "\u{f0132} " } else { "\u{e640} " };
+        //let marker = if is_marked { "\u{f0132} " } else { "\u{e640} " };
         // TODO: make nerdfont optional (low prio)
         // TODO: ad file extension nerdfont instead of defaulting to file (low prio)
         // TODO: toggle file extention at the end of the file name (low prio)
@@ -51,48 +51,36 @@ pub fn render(
             Style::default()
         };
 
-        Row::new(vec![
-            Cell::from(marker.to_owned()),
-            Cell::from(kind),
-            Cell::from(name.to_owned()),
-        ])
-        .style(style)
+        Row::new(vec![Cell::from(kind), Cell::from(name.to_owned())]).style(style)
     });
 
-    let table = Table::new(
-        rows,
-        [
-            Constraint::Length(5),
-            Constraint::Length(5),
-            Constraint::Min(1),
-        ],
-    )
-    .header(
-        Row::new(vec!["Mark", "Type", "Name"]).style(
+    let table = Table::new(rows, [Constraint::Length(5), Constraint::Min(1)])
+        .header(
+            Row::new(vec!["Type", "Name"]).style(
+                Style::default()
+                    .add_modifier(Modifier::BOLD)
+                    .fg(Color::Green),
+            ),
+        )
+        .block(
+            Block::default()
+                .borders(Borders::ALL)
+                .title(Line::from(vec![
+                    Span::styled(
+                        " File Explorer ",
+                        Style::default()
+                            .fg(Color::Green)
+                            .add_modifier(Modifier::BOLD),
+                    ),
+                    Span::raw(current_dir.display().to_string()),
+                ])),
+        )
+        .row_highlight_style(
             Style::default()
-                .add_modifier(Modifier::BOLD)
-                .fg(Color::Green),
-        ),
-    )
-    .block(
-        Block::default()
-            .borders(Borders::ALL)
-            .title(Line::from(vec![
-                Span::styled(
-                    " File Explorer ",
-                    Style::default()
-                        .fg(Color::Green)
-                        .add_modifier(Modifier::BOLD),
-                ),
-                Span::raw(current_dir.display().to_string()),
-            ])),
-    )
-    .row_highlight_style(
-        Style::default()
-            .bg(Color::DarkGray)
-            .add_modifier(Modifier::BOLD),
-    )
-    .highlight_symbol("> ");
+                .bg(Color::DarkGray)
+                .add_modifier(Modifier::BOLD),
+        )
+        .highlight_symbol("> ");
 
     frame.render_stateful_widget(table, layout[0], table_state);
 
