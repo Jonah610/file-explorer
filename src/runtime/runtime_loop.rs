@@ -15,7 +15,7 @@ use crate::{
     },
 };
 
-pub fn runtime_loop(mut terminal: DefaultTerminal) -> Result<()> {
+pub fn runtime_loop(mut terminal: DefaultTerminal) -> Result<PathBuf> {
     let mut manager = FileManager::new()?;
 
     let mut marked: HashSet<PathBuf> = HashSet::new();
@@ -119,8 +119,8 @@ pub fn runtime_loop(mut terminal: DefaultTerminal) -> Result<()> {
         }
 
         match key.code {
-            // TODO: when exiting program have the terminal in the last visited directory (mid prio)
-            KeyCode::Char('q') | KeyCode::Esc => break,
+            // Quit
+            KeyCode::Char('q') | KeyCode::Esc => break Ok(manager.current_dir().to_path_buf()),
 
             // Move down
             KeyCode::Down | KeyCode::Char('j') => {
@@ -302,8 +302,6 @@ pub fn runtime_loop(mut terminal: DefaultTerminal) -> Result<()> {
             _ => {}
         }
     }
-
-    Ok(())
 }
 
 fn submit_prompt(
